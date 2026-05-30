@@ -4,7 +4,7 @@
 int main(void)
 {
 	
-	int a=1,b=0,arch=0,sum=0;
+	int a=1,b=0,arch=0;
 	scanf("%d", &a);
 	if (a==0){
 		printf("%s ", "NO");
@@ -18,7 +18,6 @@ int main(void)
 				
 			a=(a-b)/10;
 			arch=b;
-			sum=sum+b;
 	}
 	printf("%s ", "NO");
 
