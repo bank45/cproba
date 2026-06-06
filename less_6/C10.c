@@ -1,24 +1,10 @@
 #include <stdio.h>
 
 
-int factorial(int n)
-	{
-		int f=1;
-		int coun=1;
-		if(n!=0){
-			while(coun<=n)
-			{
-				f=f*coun;
-				coun++;	
-			}
-
-
-		}else{
-			f=1;
-		}
-		
-		return f;
-	}
+ void print_simple(int n)
+ {
+	 
+ }
 	
 	
 int main()
