@@ -14,7 +14,8 @@ int main(int argc, char **argv)
         {0,0,0,0,0,0}
     };
 
-    avg(* p);
+    float res = avg(* p);
+    printf("avg: %.2f ",res);
 
     return 0;
 }
