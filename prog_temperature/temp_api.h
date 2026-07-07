@@ -4,18 +4,18 @@
 
 typedef struct arr_temt
 {
-    int year;
-    int month;
-    int day;
-    int hours;
-    int minutes;
-    int temperature;
+    int dddd;
+    int mm;
+    int dd;
+    int hh;
+    int m;
+    float temperature;
 } Data;
 
 
-float avg(struct arr_temt);
-float min(struct arr_temt);
-float max(struct arr_temt);
+float temp_avg(const Data *arr_temp, int size, int mm);
+float temp_min(const Data *arr_temp, int sizeб, int mm);
+float temp_max(const Data *arr_temp, int size, int mm);
 
 
 #endif
