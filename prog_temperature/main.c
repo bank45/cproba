@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "temp_api.h"
 
-static Data p[16] = {
+static Data p[1000] = {
     {2021,01,16,01,01,-47},
     {2021,01,16,01,03,-44},
     {2021,01,16,01,04,-43},
@@ -23,7 +23,6 @@ static Data p[16] = {
 int main(int argc, char *argv[])
 {
 
-
     int mm = 0;
     char fileName[255] = "";
     if (argc == 1)
@@ -44,35 +43,16 @@ int main(int argc, char *argv[])
                 break;
             case 'm':
                 sscanf(argv[i + 1], "%d", &mm);
-                // printf("%d \n", mm);
                 break;
             default:
                 break;
             }
     }
 
+
     int size = sizeof(p) / sizeof(p[0]);
 
-    // float res = temp_avg(p,size,mm);
-    if(mm!=0)
-    {
-    printf("Average temperature per month - %d: %.2f\n",mm, temp_avg(p,size,mm));
-    printf("Minimum temperature per month - %d: %.2f\n",mm, temp_min(p,size,mm));
-    printf("Maximum temperature per month - %d: %.2f\n",mm, temp_max(p,size,mm));  
-
-    }else{
-        int i = 1;
-        while(i<13)
-        {
-            printf("Average temperature per month - %d: %.2f\n",i, temp_avg(p,size,i));
-            printf("Minimum temperature per month - %d: %.2f\n",i, temp_min(p,size,i));
-            printf("Maximum temperature per month - %d: %.2f\n",i, temp_max(p,size,i));  
-            printf("-----------------------------------------\n");  
-            i++;
-        }
-    }
-
-    // printf("avg: %.2f ", res);
+        printData(p, size, mm);
 
 
     return 0;
