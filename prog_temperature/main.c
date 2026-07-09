@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    Data p[365]={0};
+    Data p[525600]={0};
     int mm = 0;
     char fileName[255] = "";
     if (argc == 1)
