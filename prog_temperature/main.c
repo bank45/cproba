@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "temp_api.h"
 
-static Data p[1000] = {
+static Data p[365] = {
     {2021,01,16,01,01,-47},
     {2021,01,16,01,03,-44},
     {2021,01,16,01,04,-43},
