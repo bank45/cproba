@@ -18,5 +18,6 @@ float temp_min(const Data *arr_temp, int sizeб, int mm);
 float temp_max(const Data *arr_temp, int size, int mm);
 
 int printData(const Data *p, int size, int mm);
-int addStatistic( Data *p);
+int addStatisticTest( Data *p);
+int addStatistic(Data *p, FILE* f);
 #endif
