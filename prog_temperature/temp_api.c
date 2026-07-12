@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <windows.h>
 
+#define GREEN "\033[32m"
+#define RED "\033[31m"
+#define BLUE "\033[34m"
+#define RESET "\033[0m"
+
 float temp_avg(const Data *arr_temp, int size, int mm)
 {
 
@@ -56,13 +61,11 @@ float temp_min(const Data *arr_temp, int size, int mm)
             if (year_mm[mm] == 100)
             {
                 year_mm[mm] = arr_temp[i].temperature;
-                // printf("year_mm[mm]: %.2f arr_temp[i].temperature: %.2f\n", year_mm[mm], arr_temp[i].temperature);
             }
             else
             {
                 if (year_mm[mm] > arr_temp[i].temperature)
                 {
-                    // printf("temp_min: year_mm[mm]: %.2f arr_temp[i].temperature: %.2f\n", year_mm[mm], arr_temp[i].temperature);
                     year_mm[mm] = arr_temp[i].temperature;
                 }
             }
@@ -96,7 +99,6 @@ float temp_max(const Data *arr_temp, int size, int mm)
             {
                 if (year_mm[mm] < arr_temp[i].temperature)
                 {
-                    // printf("temp_max: year_mm[mm]: %.2f arr_temp[i].temperature: %.2f\n", year_mm[mm], arr_temp[i].temperature);
                     year_mm[mm] = arr_temp[i].temperature;
                 }
             }
@@ -113,6 +115,7 @@ float temp_max(const Data *arr_temp, int size, int mm)
 
 int addData(Data *p, int day, int dddd, int mm, int dd, int hh, int m, float temperature)
 {
+
     p[day].dddd = dddd;
     p[day].mm = mm;
     p[day].dd = dd;
@@ -125,7 +128,6 @@ int addData(Data *p, int day, int dddd, int mm, int dd, int hh, int m, float tem
 
 int addStatisticTest(Data *p)
 {
-    // printf("addStatisticTest\n");
 
     int arr[21][6] = {
         {2021, 01, 16, 01, 01, -47},
@@ -162,82 +164,172 @@ int addStatistic(Data *p, FILE *f)
     char buffer[1024];
     int s = 0;
 
-    // printf("1/ fscanf : %d;%d;%d;%d;%d;%f;", dddd, mm, dd, hh, m, temperature);
     while (fgets(buffer, sizeof(buffer), f) != NULL)
     {
         buffer[strcspn(buffer, "\n")] = '\0';
         buffer[strcspn(buffer, "\r")] = '\0';
         int dddd = 0, mm = 0, dd = 0, hh = 0, m = 0;
         float temperature = 0.0f;
-        //     char *value = strtok(buffer, "; ");
-        //     int i = 0;
+
         int parse = sscanf(buffer, "%d;%d;%d;%d;%d;%f",
                            &dddd, &mm, &dd, &hh, &m, &temperature);
 
         if (parse == 6)
         {
-            // printf("addStatistic %d: %d;%d;%d;%d;%d;%.2f;\n", s, dddd, mm, dd, hh, m, temperature);
             addData(p, s, dddd, mm, dd, hh, m, temperature);
-            // p[s].dddd = dddd;
-            // p[s].mm = mm;
-            // p[s].dd = dd;
-            // p[s].hh = hh;
-            // p[s].m = m;
-            // p[s].temperature = temperature;
             s++;
         }
         else
         {
-            fprintf(stderr, "Error: Invalid data format in string %d: %s\n", s, buffer);
-            // fprintf(stderr, "parse %d: \n", parse);
+            fprintf(stderr, "\033[1;31mError: Invalid data format in string %d: %s\033[0m\n", s, buffer);
         }
     }
 
     return s;
 }
 
-int deleteData(const Data *arr, int size)
+int deleteData(Data *arr, int *size, int index_to_delete)
 {
+    if (arr == NULL || size == NULL || *size <= 0)
+    {
+        return -1;
+    }
 
+    if (index_to_delete < 0 || index_to_delete >= *size)
+    {
+        fprintf(stderr, "Ошибка: Индекс %d вне границ массива\n", index_to_delete);
+        return -1;
+    }
+
+    for (int i = index_to_delete; i < *size - 1; i++)
+    {
+        arr[i] = arr[i + 1];
+    }
+    (*size)--;
     return 0;
 }
 
-int sortData(const Data *arr, int size)
+int compareData(const void *a, const void *b)
 {
-
+    const Data *da = (const Data *)a;
+    const Data *db = (const Data *)b;
+    if (da->dddd != db->dddd)
+        return da->dddd - db->dddd;
+    if (da->mm != db->mm)
+        return da->mm - db->mm;
+    if (da->dd != db->dd)
+        return da->dd - db->dd;
+    if (da->hh != db->hh)
+        return da->hh - db->hh;
+    if (da->m != db->m)
+        return da->m - db->m;
     return 0;
 }
 
-int printData(const Data *p, int size, int mm)
+int sortData(Data *arr, int size)
+{
+    if (arr == NULL || size <= 0) return -1;
+
+    // Вызываем встроенную быструю сортировку
+    qsort(arr, size, sizeof(Data), compareData);
+    
+    return 0;
+}
+
+int printReport(const Data *p, int size, int mm, FILE *fout)
 {
 
     if (mm != 0 && mm < 13 && mm > 0)
     {
-        printf("------------------------temperature statistics------------------------\n");
-
+        printf(GREEN "------------------------temperature statistics------------------------\n");
+        fprintf(fout, "------------------------temperature statistics------------------------\n");
         printf("             month     Average        Minimum        Maximum \n");
+        fprintf(fout, "             month     Average        Minimum        Maximum \n");
+        printf("----------------------------------------------------------------------\n");
+        fprintf(fout, "----------------------------------------------------------------------\n");
         printf("      %10d    %10.2f    %10.2f    %10.2f\n", mm, temp_avg(p, size, mm), temp_min(p, size, mm), temp_max(p, size, mm));
-        printf("======================================================================\n");
+        fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", mm, temp_avg(p, size, mm), temp_min(p, size, mm), temp_max(p, size, mm));
+        printf("----------------------------------------------------------------------");
+        fprintf(fout, "----------------------------------------------------------------------");
+        printf(RESET "\n");
+        fprintf(fout, "\n");
     }
     else if (mm < 13 && mm >= 0)
     {
 
         int i = 1;
-        printf("------------------------temperature statistics------------------------\n");
+        printf(GREEN "------------------------temperature statistics------------------------\n");
+        fprintf(fout, "------------------------temperature statistics------------------------\n");
         printf("             month     Average        Minimum        Maximum \n");
+        fprintf(fout, "             month     Average        Minimum        Maximum \n");
+        printf("----------------------------------------------------------------------\n");
+        fprintf(fout, "----------------------------------------------------------------------\n");
 
         while (i < 13)
         {
 
-            printf("      %10d    %10.2f    %10.2f    %10.2f\n", i, temp_avg(p, size, i), temp_min(p, size, i), temp_max(p, size, i));
-            // printf("Average temperature per month - %d: %.2f\n",i, temp_avg(p,size,i));
-            // printf("Minimum temperature per month - %d: %.2f\n",i, temp_min(p,size,i));
-            // printf("Maximum temperature per month - %d: %.2f\n",i, temp_max(p,size,i));
-            // printf("-----------------------------------------\n");
+            printf(GREEN "      %10d    %10.2f    %10.2f    %10.2f\n", i, temp_avg(p, size, i), temp_min(p, size, i), temp_max(p, size, i));
+            fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", i, temp_avg(p, size, i), temp_min(p, size, i), temp_max(p, size, i));
+
             i++;
         }
-        printf("======================================================================\n");
+        printf("----------------------------------------------------------------------");
+        fprintf(fout, "----------------------------------------------------------------------");
+        printf(RESET "\n");
+        fprintf(fout, "\n");
     };
 
+    return 0;
+}
+
+int saveRecordsToBinary(const Data *arr, int size, const char *fileName)
+{
+    if (arr == NULL || fileName == NULL)
+        return -1;
+    FILE *fout_dat = fopen(fileName, "wb");
+    if (!fout_dat)
+        return 1;
+    int written = fwrite(arr, sizeof(Data), size, fout_dat);
+    fclose(fout_dat);
+    return (int)written;
+}
+
+int loadRecordsFromBinary(Data **arr, int *max_size, const char *fileName)
+{
+    FILE *f = fopen(fileName, "rb");
+    if (f == NULL)
+    {
+        perror("Ошибка открытия бинарного файла");
+        return -1;
+    }
+    fseek(f, 0, SEEK_END);
+    long fileSizeInBytes = ftell(f);
+    rewind(f);
+
+    int records_in_file = fileSizeInBytes / sizeof(Data);
+
+    Data *temp = (Data *)realloc(*arr, records_in_file * sizeof(Data));
+    if (temp == NULL)
+    {
+        perror("Ошибка выделения памяти под точный размер файла");
+        fclose(f);
+        return -1;
+    }
+
+    *arr = temp;
+    *max_size = records_in_file;
+
+    int read_coun = fread(*arr, sizeof(Data), records_in_file, f);
+    fclose(f);
+    return (int)read_coun;
+}
+
+int printArray(const Data *p, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        printf(GREEN "index: %2d, %10d,%10d,%10d,%10d,%10d,%10.2f\n", i, p[i].dddd, p[i].mm, p[i].dd, p[i].hh, p[i].m, p[i].temperature);
+        printf(RESET);
+    }
     return 0;
 }
