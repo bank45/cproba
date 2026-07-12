@@ -228,56 +228,137 @@ int compareData(const void *a, const void *b)
 
 int sortData(Data *arr, int size)
 {
-    if (arr == NULL || size <= 0) return -1;
+    if (arr == NULL || size <= 0)
+        return -1;
 
-    // Вызываем встроенную быструю сортировку
     qsort(arr, size, sizeof(Data), compareData);
-    
+
     return 0;
 }
 
 int printReport(const Data *p, int size, int mm, FILE *fout)
 {
 
-    if (mm != 0 && mm < 13 && mm > 0)
+    printf(GREEN "------------------------temperature statistics------------------------\n");
+    printf("             month     Average        Minimum        Maximum \n");
+    printf("----------------------------------------------------------------------\n");
+
+    if (fout)
     {
-        printf(GREEN "------------------------temperature statistics------------------------\n");
         fprintf(fout, "------------------------temperature statistics------------------------\n");
-        printf("             month     Average        Minimum        Maximum \n");
         fprintf(fout, "             month     Average        Minimum        Maximum \n");
-        printf("----------------------------------------------------------------------\n");
         fprintf(fout, "----------------------------------------------------------------------\n");
-        printf("      %10d    %10.2f    %10.2f    %10.2f\n", mm, temp_avg(p, size, mm), temp_min(p, size, mm), temp_max(p, size, mm));
-        fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", mm, temp_avg(p, size, mm), temp_min(p, size, mm), temp_max(p, size, mm));
-        printf("----------------------------------------------------------------------");
-        fprintf(fout, "----------------------------------------------------------------------");
-        printf(RESET "\n");
-        fprintf(fout, "\n");
     }
-    else if (mm < 13 && mm >= 0)
+
+    if (mm >= 1 && mm <= 12)
+    {
+        // Вывод конкретного одного месяца
+        float avg = temp_avg(p, size, mm);
+        float min = temp_min(p, size, mm);
+        float max = temp_max(p, size, mm);
+
+        printf("      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
+        if (fout)
+        {
+            fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
+        }
+    }
+    else
     {
 
-        int i = 1;
-        printf(GREEN "------------------------temperature statistics------------------------\n");
-        fprintf(fout, "------------------------temperature statistics------------------------\n");
-        printf("             month     Average        Minimum        Maximum \n");
-        fprintf(fout, "             month     Average        Minimum        Maximum \n");
-        printf("----------------------------------------------------------------------\n");
-        fprintf(fout, "----------------------------------------------------------------------\n");
+        float year_sum = 0.0f;
+        int year_total_count = 0;
 
-        while (i < 13)
+        float year_min_val = 0.0f;
+        float year_max_val = 0.0f;
+        int first_year_found = 1; 
+
+   
+        for (int i = 1; i <= 12; i++)
         {
+  
+            float avg = temp_avg(p, size, i);
+            float min = temp_min(p, size, i);
+            float max = temp_max(p, size, i);
 
-            printf(GREEN "      %10d    %10.2f    %10.2f    %10.2f\n", i, temp_avg(p, size, i), temp_min(p, size, i), temp_max(p, size, i));
-            fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", i, temp_avg(p, size, i), temp_min(p, size, i), temp_max(p, size, i));
+            int month_count = 0;
+            float month_sum = 0.0f;
+            for (int k = 0; k < size; k++)
+            {
+                if (p[k].mm == i)
+                {
+                    month_sum += p[k].temperature;
+                    month_count++;
+                }
+            }
 
-            i++;
+            if (month_count > 0)
+            {
+                printf("      %10d    %10.2f    %10.2f    %10.2f\n", i, avg, min, max);
+                if (fout)
+                {
+                    fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", i, avg, min, max);
+                }
+
+                year_sum += month_sum;
+                year_total_count += month_count;
+
+                if (first_year_found)
+                {
+                    year_min_val = min;
+                    year_max_val = max;
+                    first_year_found = 0;
+                }
+                else
+                {
+                    if (min < year_min_val)
+                        year_min_val = min;
+                    if (max > year_max_val)
+                        year_max_val = max;
+                }
+            }
+            else
+            {
+
+                printf("      %10d            -            -            -\n", i);
+                if (fout)
+                {
+                    fprintf(fout, "      %10d            -            -            -\n", i);
+                }
+            }
         }
-        printf("----------------------------------------------------------------------");
-        fprintf(fout, "----------------------------------------------------------------------");
-        printf(RESET "\n");
-        fprintf(fout, "\n");
-    };
+
+        printf("----------------------------------------------------------------------\n");
+        if (fout)
+        {
+            fprintf(fout, "----------------------------------------------------------------------\n");
+        }
+
+        if (year_total_count > 0)
+        {
+            float year_avg_val = year_sum / year_total_count;
+
+            printf("            Year    %10.2f    %10.2f    %10.2f\n", year_avg_val, year_min_val, year_max_val);
+            if (fout)
+            {
+                fprintf(fout, "            Year    %10.2f    %10.2f    %10.2f\n", year_avg_val, year_min_val, year_max_val);
+            }
+        }
+        else
+        {
+            printf("            Year            -            -            -\n");
+            if (fout)
+            {
+                fprintf(fout, "            Year            -            -            -\n");
+            }
+        }
+    }
+
+    printf("----------------------------------------------------------------------" RESET "\n");
+    if (fout)
+    {
+        fprintf(fout, "----------------------------------------------------------------------\n");
+    }
 
     return 0;
 }
