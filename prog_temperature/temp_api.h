@@ -1,30 +1,31 @@
 #ifndef TEMP_API_H
 #define TEMP_API_H
 
-
-typedef struct arr_temt
+typedef struct stack
 {
-    int dddd;
-    int mm;
-    int dd;
-    int hh;
-    int m;
+    int dddd, mm, dd, hh, m;
     float temperature;
-} Data;
+    struct stack *next;
+} stack;
 
-
-float temp_avg(const Data *arr_temp, int size, int mm);
-float temp_min(const Data *arr_temp, int size, int mm);
-float temp_max(const Data *arr_temp, int size, int mm);
+float temp_avg(const stack *head, int mm);
+float temp_min(const stack *head, int mm);
+float temp_max(const stack *head, int mm);
 
 int compareData(const void *a, const void *b);
-int sortData(Data *arr, int size);
+int sortData(stack *arr, int size);
 
-int printReport(const Data *p, int size, int mm,FILE* fout);
-int printArray(const Data *p, int size);
-int addStatisticTest( Data *p);
-int addStatistic(Data *p, FILE* f);
-int saveRecordsToBinary(const Data *arr, int size, const char *fileName);
-int loadRecordsFromBinary(Data **arr, int *max_size, const char *fileName);
-int deleteData( Data *arr, int *size, int index_to_delete);
+int printReport(const stack *p, int mm, FILE *fout);
+int printArray(const stack *p, int size);
+
+int addStatisticTest(stack **head);
+int addStatistic(stack **head, FILE *f);
+int addData(stack **head, int dddd, int mm, int dd, int hh, int m, float temperature);
+
+int saveRecordsToBinary(const stack *arr, int size, const char *fileName);
+int loadRecordsFromBinary(stack **arr, int *max_size, const char *fileName);
+int deleteData(stack *arr, int *size, int index_to_delete);
+
+
+void push(struct stack **head, int dddd, int mm, int dd, int hh, int m, float temperature);
 #endif

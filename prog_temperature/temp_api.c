@@ -10,123 +10,102 @@
 #define BLUE "\033[34m"
 #define RESET "\033[0m"
 
-float temp_avg(const Data *arr_temp, int size, int mm)
+void push(struct stack **head, int dddd, int mm, int dd, int hh, int m, float temperature)
+{
+    stack *newNode = malloc(sizeof(stack));
+
+    newNode->dddd = dddd;
+    newNode->mm = mm;
+    newNode->dd = dd;
+    newNode->hh = hh;
+    newNode->m = m;
+    newNode->temperature = temperature;
+
+    newNode->next = *head;
+    *head = newNode;
+}
+
+float temp_avg(const stack *head, int mm)
 {
 
-    // float year_mm[13] = {0};
-    // int i = 0;
-    // int coun = 0;
-    // while (i <= size)
-    // {
-    //     if (arr_temp[i].mm == mm)
-    //     {
-    //         year_mm[mm] = year_mm[mm] + arr_temp[i].temperature;
-    //         coun++;
-    //     }
-    //     i++;
-    // }
-    // if (coun == 0)
-    //     return 0.0f;
-
-    // return (float)year_mm[mm] / coun;
     if (mm < 1 || mm > 12)
         return 0.0f;
 
     float sum = 0.0f;
     int count = 0;
+    const stack *current = head;
 
-    for (int i = 0; i < size; ++i)
+    while (current != NULL)
     {
-        if (arr_temp[i].mm == mm)
+        if (current->mm == mm)
         {
-            sum += arr_temp[i].temperature;
+            sum += current->temperature;
             count++;
         }
+        current = current->next;
     }
 
     return count > 0 ? sum / count : 0.0f;
 }
 
-float temp_min(const Data *arr_temp, int size, int mm)
+float temp_min(const stack *head, int mm)
 {
-
-    float year_mm[13] = {0};
-    int i = 0;
-    int coun = 0;
-    year_mm[mm] = 100;
-    while (i <= size)
-    {
-        if (arr_temp[i].mm == mm)
-        {
-            if (year_mm[mm] == 100)
-            {
-                year_mm[mm] = arr_temp[i].temperature;
-            }
-            else
-            {
-                if (year_mm[mm] > arr_temp[i].temperature)
-                {
-                    year_mm[mm] = arr_temp[i].temperature;
-                }
-            }
-
-            coun++;
-        }
-        i++;
-    }
-    if (coun == 0)
+    if (mm < 1 || mm > 12)
         return 0.0f;
 
-    return year_mm[mm];
-}
+    float min_val = 100.0f;
+    int found = 0;
+    const stack *current = head;
 
-float temp_max(const Data *arr_temp, int size, int mm)
-{
-    float year_mm[13] = {0};
-    int i = 0;
-    int coun = 0;
-    year_mm[mm] = 100;
-    while (i <= size)
+    while (current != NULL)
     {
-
-        if (arr_temp[i].mm == mm)
+        if (current->mm == mm)
         {
-            if (year_mm[mm] == 100)
+            if (!found || current->temperature < min_val)
             {
-                year_mm[mm] = arr_temp[i].temperature;
+                min_val = current->temperature;
+                found = 1;
             }
-            else
-            {
-                if (year_mm[mm] < arr_temp[i].temperature)
-                {
-                    year_mm[mm] = arr_temp[i].temperature;
-                }
-            }
-            coun++;
         }
-        i++;
+        current = current->next;
     }
 
-    if (coun == 0)
-        return 0.0f;
-
-    return year_mm[mm];
+    return found ? min_val : 0.0f;
 }
 
-int addData(Data *p, int day, int dddd, int mm, int dd, int hh, int m, float temperature)
+float temp_max(const stack *head, int mm)
 {
+    if (mm < 1 || mm > 12)
+        return 0.0f;
 
-    p[day].dddd = dddd;
-    p[day].mm = mm;
-    p[day].dd = dd;
-    p[day].hh = hh;
-    p[day].m = m;
-    p[day].temperature = temperature;
+    float max_val = -100;
+    int found = 0;
+    const stack *current = head;
 
+    while (current != NULL)
+    {
+
+        if (current->mm == mm)
+        {
+            if (!found || current->temperature > max_val)
+            {
+                max_val = current->temperature;
+                found = 1;
+            }
+        }
+        current = current->next;
+    }
+
+    return found ? max_val : 0.0f;
+}
+
+int addData(stack **head, int dddd, int mm, int dd, int hh, int m, float temperature)
+{
+    push(head, dddd, mm, dd, hh, m, temperature);
     return 0;
 }
 
-int addStatisticTest(Data *p)
+int addStatisticTest(stack **head)
 {
 
     int arr[21][6] = {
@@ -149,17 +128,18 @@ int addStatisticTest(Data *p)
 
     int i = 0;
 
-    while (arr[i][0] != 0)
+    for (int j = 0; i < 16; j++)
     {
 
-        addData(p, i, arr[i][0], arr[i][1], arr[i][2], arr[i][3], arr[i][4], arr[i][5]);
+        addData(head, arr[i][0], arr[i][1], arr[i][2], arr[i][3], arr[i][4], arr[i][5]);
+
         i++;
     }
 
     return i;
 }
 
-int addStatistic(Data *p, FILE *f)
+int addStatistic(stack **head, FILE *f)
 {
     char buffer[1024];
     int s = 0;
@@ -176,7 +156,7 @@ int addStatistic(Data *p, FILE *f)
 
         if (parse == 6)
         {
-            addData(p, s, dddd, mm, dd, hh, m, temperature);
+            addData(head, dddd, mm, dd, hh, m, temperature);
             s++;
         }
         else
@@ -188,7 +168,7 @@ int addStatistic(Data *p, FILE *f)
     return s;
 }
 
-int deleteData(Data *arr, int *size, int index_to_delete)
+int deleteData(stack *arr, int *size, int index_to_delete)
 {
     if (arr == NULL || size == NULL || *size <= 0)
     {
@@ -211,8 +191,8 @@ int deleteData(Data *arr, int *size, int index_to_delete)
 
 int compareData(const void *a, const void *b)
 {
-    const Data *da = (const Data *)a;
-    const Data *db = (const Data *)b;
+    const stack *da = (const stack *)a;
+    const stack *db = (const stack *)b;
     if (da->dddd != db->dddd)
         return da->dddd - db->dddd;
     if (da->mm != db->mm)
@@ -226,17 +206,17 @@ int compareData(const void *a, const void *b)
     return 0;
 }
 
-int sortData(Data *arr, int size)
+int sortData(stack *arr, int size)
 {
     if (arr == NULL || size <= 0)
         return -1;
 
-    qsort(arr, size, sizeof(Data), compareData);
+    qsort(arr, size, sizeof(stack), compareData);
 
     return 0;
 }
 
-int printReport(const Data *p, int size, int mm, FILE *fout)
+int printReport(const stack *p, int mm, FILE *fout)
 {
 
     printf(GREEN "------------------------temperature statistics------------------------\n");
@@ -253,14 +233,37 @@ int printReport(const Data *p, int size, int mm, FILE *fout)
     if (mm >= 1 && mm <= 12)
     {
         // Вывод конкретного одного месяца
-        float avg = temp_avg(p, size, mm);
-        float min = temp_min(p, size, mm);
-        float max = temp_max(p, size, mm);
+        float avg = temp_avg(p, mm);
+        float min = temp_min(p, mm);
+        float max = temp_max(p, mm);
 
-        printf("      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
-        if (fout)
+        int has_data = 0;
+        const stack *curr = p;
+        while (curr != NULL)
         {
-            fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
+            if (curr->mm == mm)
+            {
+                has_data = 1;
+                break;
+            }
+            curr = curr->next;
+        }
+
+        if (has_data)
+        {
+            printf("      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
+            if (fout)
+            {
+                fprintf(fout, "      %10d    %10.2f    %10.2f    %10.2f\n", mm, avg, min, max);
+            }
+        }
+        else
+        {
+            printf("      %10d    -    -    -\n", mm);
+            if (fout)
+            {
+                fprintf(fout, "      %10d    -    -    -\n", mm);
+            }
         }
     }
     else
@@ -271,25 +274,27 @@ int printReport(const Data *p, int size, int mm, FILE *fout)
 
         float year_min_val = 0.0f;
         float year_max_val = 0.0f;
-        int first_year_found = 1; 
+        int first_year_found = 1;
 
-   
         for (int i = 1; i <= 12; i++)
         {
-  
-            float avg = temp_avg(p, size, i);
-            float min = temp_min(p, size, i);
-            float max = temp_max(p, size, i);
+
+            float avg = temp_avg(p, i);
+            float min = temp_min(p, i);
+            float max = temp_max(p, i);
 
             int month_count = 0;
             float month_sum = 0.0f;
-            for (int k = 0; k < size; k++)
+
+            const stack *current = p;
+            while (current != NULL)
             {
-                if (p[k].mm == i)
+                if (current->mm == i)
                 {
-                    month_sum += p[k].temperature;
+                    month_sum += current->temperature;
                     month_count++;
                 }
+                current = current->next;
             }
 
             if (month_count > 0)
@@ -363,19 +368,19 @@ int printReport(const Data *p, int size, int mm, FILE *fout)
     return 0;
 }
 
-int saveRecordsToBinary(const Data *arr, int size, const char *fileName)
+int saveRecordsToBinary(const stack *arr, int size, const char *fileName)
 {
     if (arr == NULL || fileName == NULL)
         return -1;
     FILE *fout_dat = fopen(fileName, "wb");
     if (!fout_dat)
         return 1;
-    int written = fwrite(arr, sizeof(Data), size, fout_dat);
+    int written = fwrite(arr, sizeof(stack), size, fout_dat);
     fclose(fout_dat);
     return (int)written;
 }
 
-int loadRecordsFromBinary(Data **arr, int *max_size, const char *fileName)
+int loadRecordsFromBinary(stack **arr, int *max_size, const char *fileName)
 {
     FILE *f = fopen(fileName, "rb");
     if (f == NULL)
@@ -387,9 +392,9 @@ int loadRecordsFromBinary(Data **arr, int *max_size, const char *fileName)
     long fileSizeInBytes = ftell(f);
     rewind(f);
 
-    int records_in_file = fileSizeInBytes / sizeof(Data);
+    int records_in_file = fileSizeInBytes / sizeof(stack);
 
-    Data *temp = (Data *)realloc(*arr, records_in_file * sizeof(Data));
+    stack *temp = (stack *)realloc(*arr, records_in_file * sizeof(stack));
     if (temp == NULL)
     {
         perror("Ошибка выделения памяти под точный размер файла");
@@ -400,12 +405,12 @@ int loadRecordsFromBinary(Data **arr, int *max_size, const char *fileName)
     *arr = temp;
     *max_size = records_in_file;
 
-    int read_coun = fread(*arr, sizeof(Data), records_in_file, f);
+    int read_coun = fread(*arr, sizeof(stack), records_in_file, f);
     fclose(f);
     return (int)read_coun;
 }
 
-int printArray(const Data *p, int size)
+int printArray(const stack *p, int size)
 {
     for (int i = 0; i < size; i++)
     {

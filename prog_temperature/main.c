@@ -7,12 +7,14 @@
 #define BLUE "\033[34m"
 #define RESET "\033[0m"
 
-Data *p = NULL;
+stack *p = NULL;
 int records = 0;
+
+
 int main(int argc, char *argv[])
 {
     int size = 600000;
-    p = (Data *)malloc(size * sizeof(Data));
+    // p = (stack *)malloc(size * sizeof(stack));
 
     FILE *f = NULL, *fout = NULL;
     int mm = 0;
@@ -52,7 +54,7 @@ int main(int argc, char *argv[])
                 }
 
                 printf("file name: %s \n", fileName);
-                records = addStatistic(p, f);
+                records = addStatistic(&p, f);
                 printf("records: %d\n", records);
 
                 int written = saveRecordsToBinary(p, records, baseFileName);
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
                 sscanf(argv[i + 1], "%d", &mm);
                 break;
             case 't':
-                records = addStatisticTest(p);
+                records = addStatisticTest(&p);
                 break;
             case 'b':
                 records = loadRecordsFromBinary(&p, &size, baseFileName);
@@ -123,7 +125,7 @@ int main(int argc, char *argv[])
         return 1;
     if (records > 0)
     {
-        printReport(p, records, mm, fout);
+        printReport(p, mm, fout);
 
         char fullPath[255];
         if (GetFullPathNameA("report.txt", MAX_PATH, fullPath, NULL))
