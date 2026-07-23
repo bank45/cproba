@@ -434,7 +434,7 @@ int saveRecordsToBinary(stack **head, const char *fileName)
     FILE *file = fopen(fileName, "wb"); 
     if (file == NULL)
     {
-        return 0;
+        return 1;
     }
 
     stack *current = *head; 
@@ -450,7 +450,7 @@ int saveRecordsToBinary(stack **head, const char *fileName)
     }
 
     fclose(file);
-    return 1; 
+    return 0; 
 }
 
 int loadRecordsFromBinary(stack **head, const char *fileName)
