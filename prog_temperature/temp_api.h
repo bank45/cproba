@@ -13,18 +13,18 @@ float temp_min(const stack *head, int mm);
 float temp_max(const stack *head, int mm);
 
 int compareData(const void *a, const void *b);
-int sortData(stack *arr, int size);
+int sortData(stack **head);
 
 int printReport(const stack *p, int mm, FILE *fout);
-int printArray(const stack *p, int size);
+int printStack(const stack *p);
 
 int addStatisticTest(stack **head);
 int addStatistic(stack **head, FILE *f);
 int addData(stack **head, int dddd, int mm, int dd, int hh, int m, float temperature);
 
-int saveRecordsToBinary(const stack *arr, int size, const char *fileName);
-int loadRecordsFromBinary(stack **arr, int *max_size, const char *fileName);
-int deleteData(stack *arr, int *size, int index_to_delete);
+int saveRecordsToBinary(stack **head, const char *fileName);
+int loadRecordsFromBinary(stack **head, const char *fileName);
+int deleteData(stack **head, int index_to_delete);
 
 
 void push(struct stack **head, int dddd, int mm, int dd, int hh, int m, float temperature);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "temp_api.h"
 #include <stdlib.h>
+#include <locale.h>
 #include <windows.h>
 
 #define RED "\033[31m"
@@ -10,9 +11,12 @@
 stack *p = NULL;
 int records = 0;
 
-
 int main(int argc, char *argv[])
 {
+    // setlocale(LC_ALL, "Russian");
+    // SetConsoleCP(65001);
+    // SetConsoleOutputCP(65001);
+    system("chcp 65001 > nul");
     int size = 600000;
     // p = (stack *)malloc(size * sizeof(stack));
 
@@ -57,9 +61,20 @@ int main(int argc, char *argv[])
                 records = addStatistic(&p, f);
                 printf("records: %d\n", records);
 
-                int written = saveRecordsToBinary(p, records, baseFileName);
+                int written = saveRecordsToBinary(&p, baseFileName);
+                if (written == -1)
+                {
+                    printf("Ошибка: неверные аргументы функции (NULL)\n");
+                }
+                else if (written == 1)
+                {
 
-                printf("written to a binery file %s: %d\n", baseFileName, written);
+                    printf("Ошибка: не удалось открыть файл для записи\n");
+                }
+                else if (written == 0)
+                {
+                    printf("Стек успешно сохранен в бинарный файл\n");
+                }
 
                 break;
             case 'm':
@@ -69,15 +84,15 @@ int main(int argc, char *argv[])
                 records = addStatisticTest(&p);
                 break;
             case 'b':
-                records = loadRecordsFromBinary(&p, &size, baseFileName);
+                records = loadRecordsFromBinary(&p, baseFileName);
                 printf("loaded from a binery file %s: %d\n", baseFileName, records);
                 break;
             case 's':
             {
-                records = loadRecordsFromBinary(&p, &size, baseFileName);
+                records = loadRecordsFromBinary(&p, baseFileName);
                 printf("loaded from a binery file %s: %d\n", baseFileName, records);
-                sortData(p, records);
-                printArray(p, records);
+                sortData(&p);
+                printStack(p);
 
                 int index_to_delete = 0;
                 printf("Enter the index of the line you want to delete: ");
@@ -85,16 +100,16 @@ int main(int argc, char *argv[])
                 if (scanf("%d", &index_to_delete) == 1)
                 {
 
-                    if (deleteData(p, &records, index_to_delete) == 0)
+                    if (deleteData(&p,  index_to_delete) == 0)
                     {
                         printf(RED "delete records: %d \n", records);
 
-                        sortData(p, records);
+                        sortData(&p);
 
-                        int written = saveRecordsToBinary(p, records, baseFileName);
+                        int written = saveRecordsToBinary(&p, baseFileName);
                         printf("written to a binery file %s: %d\n", baseFileName, written);
 
-                        printArray(p, records);
+                        printStack(p);
                         if (f != NULL)
                             fclose(f);
                         if (fout != NULL)

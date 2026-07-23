@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <stddef.h>
 
 #define GREEN "\033[32m"
 #define RED "\033[31m"
@@ -168,31 +169,49 @@ int addStatistic(stack **head, FILE *f)
     return s;
 }
 
-int deleteData(stack *arr, int *size, int index_to_delete)
+
+
+int deleteData(stack **head, int index_to_delete)
 {
-    if (arr == NULL || size == NULL || *size <= 0)
+    if (head == NULL || *head == NULL || index_to_delete < 0)
     {
+        return -1; // Стек пуст или неверный индекс
+    }
+
+    stack *temp = *head;
+
+    if (index_to_delete == 0)
+    {
+        *head = (*head)->next; 
+        free(temp);           
+        return 0;
+    }
+
+    stack *prev = NULL;
+
+    for (int i = 0; temp != NULL && i < index_to_delete; i++)
+    {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (temp == NULL)
+    {
+        fprintf(stderr, "Ошибка: Индекс %d вне границ списка\n", index_to_delete);
         return -1;
     }
 
-    if (index_to_delete < 0 || index_to_delete >= *size)
-    {
-        fprintf(stderr, "Ошибка: Индекс %d вне границ массива\n", index_to_delete);
-        return -1;
-    }
+    prev->next = temp->next;
+    free(temp);
 
-    for (int i = index_to_delete; i < *size - 1; i++)
-    {
-        arr[i] = arr[i + 1];
-    }
-    (*size)--;
     return 0;
 }
 
+
 int compareData(const void *a, const void *b)
 {
-    const stack *da = (const stack *)a;
-    const stack *db = (const stack *)b;
+    const stack *da = *(const stack **)a;
+    const stack *db = *(const stack **)b;
     if (da->dddd != db->dddd)
         return da->dddd - db->dddd;
     if (da->mm != db->mm)
@@ -206,12 +225,49 @@ int compareData(const void *a, const void *b)
     return 0;
 }
 
-int sortData(stack *arr, int size)
+int countElements(stack *head)
 {
-    if (arr == NULL || size <= 0)
+    int count = 0;
+    stack *current = head;
+    while (current != NULL)
+    {
+        count++;
+        current = current->next;
+    }
+    return count;
+}
+
+int sortData(stack **head)
+{
+    if (head == NULL || *head == NULL)
         return -1;
 
-    qsort(arr, size, sizeof(stack), compareData);
+    int size = countElements(*head);
+    if (size <= 1)
+        return 0; 
+
+    stack **arr = (stack **)malloc(size * sizeof(stack *));
+    if (arr == NULL)
+        return -1;
+
+    stack *current = *head;
+    for (int i = 0; i < size; i++)
+    {
+        arr[i] = current;
+        current = current->next; 
+    }
+
+    qsort(arr, size, sizeof(stack *), compareData);
+
+    for (int i = 0; i < size - 1; i++)
+    {
+        arr[i]->next = arr[i + 1];
+    }
+    arr[size - 1]->next = NULL; 
+
+    *head = arr[0];
+
+    free(arr);
 
     return 0;
 }
@@ -232,7 +288,7 @@ int printReport(const stack *p, int mm, FILE *fout)
 
     if (mm >= 1 && mm <= 12)
     {
-        // Вывод конкретного одного месяца
+
         float avg = temp_avg(p, mm);
         float min = temp_min(p, mm);
         float max = temp_max(p, mm);
@@ -368,54 +424,118 @@ int printReport(const stack *p, int mm, FILE *fout)
     return 0;
 }
 
-int saveRecordsToBinary(const stack *arr, int size, const char *fileName)
+int saveRecordsToBinary(stack **head, const char *fileName)
 {
-    if (arr == NULL || fileName == NULL)
-        return -1;
-    FILE *fout_dat = fopen(fileName, "wb");
-    if (!fout_dat)
-        return 1;
-    int written = fwrite(arr, sizeof(stack), size, fout_dat);
-    fclose(fout_dat);
-    return (int)written;
-}
-
-int loadRecordsFromBinary(stack **arr, int *max_size, const char *fileName)
-{
-    FILE *f = fopen(fileName, "rb");
-    if (f == NULL)
+    if (head == NULL || *head == NULL)
     {
-        perror("Ошибка открытия бинарного файла");
-        return -1;
-    }
-    fseek(f, 0, SEEK_END);
-    long fileSizeInBytes = ftell(f);
-    rewind(f);
-
-    int records_in_file = fileSizeInBytes / sizeof(stack);
-
-    stack *temp = (stack *)realloc(*arr, records_in_file * sizeof(stack));
-    if (temp == NULL)
-    {
-        perror("Ошибка выделения памяти под точный размер файла");
-        fclose(f);
-        return -1;
+        return 0; 
     }
 
-    *arr = temp;
-    *max_size = records_in_file;
+    FILE *file = fopen(fileName, "wb"); 
+    if (file == NULL)
+    {
+        return 0;
+    }
 
-    int read_coun = fread(*arr, sizeof(stack), records_in_file, f);
-    fclose(f);
-    return (int)read_coun;
+    stack *current = *head; 
+
+    while (current != NULL)
+    {
+
+        fwrite(&(current->dddd), sizeof(int), 5, file);
+
+        fwrite(&(current->temperature), sizeof(float), 1, file);
+
+        current = current->next; 
+    }
+
+    fclose(file);
+    return 1; 
 }
 
-int printArray(const stack *p, int size)
+int loadRecordsFromBinary(stack **head, const char *fileName)
 {
-    for (int i = 0; i < size; i++)
+    FILE *file = fopen(fileName, "rb"); 
+    if (file == NULL)
     {
-        printf(GREEN "index: %2d, %10d,%10d,%10d,%10d,%10d,%10.2f\n", i, p[i].dddd, p[i].mm, p[i].dd, p[i].hh, p[i].m, p[i].temperature);
+        return 0; 
+    }
+
+    *head = NULL;
+    stack *tail = NULL; 
+
+    while (1)
+    {
+
+        stack *new_node = (stack *)malloc(sizeof(stack));
+        if (new_node == NULL)
+        {
+            fclose(file);
+            return 0; 
+        }
+
+        if (fread(&(new_node->dddd), sizeof(int), 5, file) != 5)
+        {
+            free(new_node); 
+            break;
+        }
+
+        if (fread(&(new_node->temperature), sizeof(float), 1, file) != 1)
+        {
+            free(new_node);
+            break;
+        }
+
+        new_node->next = NULL; 
+
+        // Формируем список
+        if (*head == NULL)
+        {
+            *head = new_node; 
+            tail = new_node;
+        }
+        else
+        {
+            tail->next = new_node; 
+            tail = new_node;    
+        }
+    }
+
+    fclose(file);
+    int size = countElements(*head);
+
+    return size; 
+}
+
+int printStack(const stack *p)
+{
+
+    if (p == NULL)
+    {
+        printf("Стек абсолютно пуст (NULL).\n");
+        return 0;
+    }
+
+    int index = 0;
+    const stack *current = p;
+
+    printf("--- НАЧАЛО ТЕСТОВОГО ВЫВОДА ---\n");
+    while (current != NULL)
+    {
+        printf(GREEN "index: %5d | Год: %5d, Месяц: %5d, День: %5d, Час: %5d, Мин: %5d, Темп: %6.2f | Next: %p\n",
+               index, current->dddd, current->mm, current->dd, current->hh, current->m, current->temperature, (void *)current->next);
         printf(RESET);
+
+        index++;
+
+        if (index > 20)
+        {
+            printf("Защита: выведено больше 20 элементов.\n");
+            break;
+        }
+
+        current = current->next;
     }
+    printf("--- КОНЕЦ ВЫВОДА. Всего напечатано строк: %d ---\n", index);
     return 0;
 }
