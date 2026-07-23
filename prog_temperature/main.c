@@ -42,10 +42,10 @@ int main(int argc, char *argv[])
                 printf("Options:\n");
                 printf("-m:                       Month number for displaying statistics\n");
                 printf("-f:                       Name of the CSV file for loading data\n");
-                printf("-b:                       Loading previously saved data from a binary file\n");
+                printf("-l:                       Loading previously saved data from a binary file\n");
                 printf("-h:                       HELP\n");
                 printf("-t:                       Demonstration of test data\n");
-                printf("-s:                       Printing a Array\n");
+                printf("-e:                       Editing and printing a list of structures\n");
                 return 0;
                 break;
             case 'f':
@@ -79,15 +79,19 @@ int main(int argc, char *argv[])
                 break;
             case 'm':
                 sscanf(argv[i + 1], "%d", &mm);
+                records = loadRecordsFromBinary(&p, baseFileName);
+                printf("loaded from a binery file %s: %d\n", baseFileName, records);
+                // printStack(p);
+
                 break;
             case 't':
                 records = addStatisticTest(&p);
                 break;
-            case 'b':
+            case 'l':
                 records = loadRecordsFromBinary(&p, baseFileName);
                 printf("loaded from a binery file %s: %d\n", baseFileName, records);
                 break;
-            case 's':
+            case 'e':
             {
                 records = loadRecordsFromBinary(&p, baseFileName);
                 printf("loaded from a binery file %s: %d\n", baseFileName, records);
@@ -100,7 +104,7 @@ int main(int argc, char *argv[])
                 if (scanf("%d", &index_to_delete) == 1)
                 {
 
-                    if (deleteData(&p,  index_to_delete) == 0)
+                    if (deleteData(&p, index_to_delete) == 0)
                     {
                         printf(RED "delete records: %d \n", records);
 
