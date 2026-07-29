@@ -10,7 +10,6 @@ typedef struct list
     struct list *next;
 } list;
 
-
 size_t totalMemoryUsage(list *head)
 {
     if (head == NULL)
@@ -26,10 +25,24 @@ size_t totalMemoryUsage(list *head)
         //                (unsigned long long)current->address, current->size, (void *)current->next);
         sum_size = sum_size + current->size;
         current = current->next;
-        // printf(" Size: %5zu",sum_size);
+        printf(" Size: %5zu\n",sum_size);
     }
 
     return sum_size;
+}
+
+// функция освобождения памяти
+void free_list(list *head)
+{
+    list *current = head;
+    list *next_node = NULL;
+
+    while (current != NULL)
+    {
+        next_node = current->next; // 1. Шаг вперед: запоминаем адрес следующего узла
+        free(current);             // 2. Удаляем текущий узел
+        current = next_node;       // 3. Переходим к следующему узлу
+    }
 }
 
 int main(int argc, char *argv[])
@@ -70,6 +83,8 @@ int main(int argc, char *argv[])
 
     // передаем новый лист на обработку
     uint64_t res = totalMemoryUsage(head);
+    //освобождаем память
+    free_list(head);
 
     return 0;
 }
