@@ -49,7 +49,7 @@ void initHead(struct snake_t *head, int x, int y)
 {
 	head->x = x;
 	head->y = y;
-	head->direction = RIGHT;
+	head->direction = LEFT;
 }
 
 void initSnake(snake_t *head, size_t size,int x, int y)
@@ -62,6 +62,32 @@ void initSnake(snake_t *head, size_t size,int x, int y)
 	head->controls = control_buttons;
 }
 
+void go(struct snake_t *head)
+{
+	char ch = '@';
+	mvprintw(head->y, head->x, " ");
+	int max_x=0, max_y=0;
+	getmaxyx(stdscr,max_y,max_x);
+	switch (head->direction)
+	{
+		case LEFT:
+		if(head->x <=0)
+			head->x = max_x;
+		mvprintw(head->y, --(head->x), "%c", ch);
+		break;
+		case RIGHT:
+		mvprintw(head->y, ++(head->x), "%c", ch);
+		break;
+		case UP:
+		mvprintw(--(head->y), head->x, "%c", ch);
+		break;
+		case DOWN:
+		mvprintw(++(head->y), head->x, "%c", ch);
+		break;
+		default:
+		break;
+	}
+}
 
 
 int main(int argc, char **argv)
@@ -85,6 +111,8 @@ int main(int argc, char **argv)
 	while(key_pressed != STOP_GAME)
 	{
 		key_pressed = getch();
+		go(snake);
+		timeout(100);
 	}
 	free(snake->tail);
 	free(snake);
