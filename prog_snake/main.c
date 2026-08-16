@@ -144,15 +144,24 @@ int main(int argc, char **argv)
 	attron(COLOR_PAIR(1));
 	box(stdscr,'*','*');	
 	
+	timeout(0);
+	clock_t delay = CLOCKS_PER_SEC / 5; 
+    clock_t last_step_time = clock();
+    
 	int key_pressed=0;
 	while(key_pressed != STOP_GAME)
 	{
 		key_pressed = getch();
-		int old_x = snake->x;
-		int old_y = snake->y;		
-		go(snake);
-		goTail(snake,old_x,old_y);
-		timeout(100);
+		
+		clock_t current_time = clock();
+        if (current_time - last_step_time >= delay) 
+			{
+			int old_x = snake->x;
+			int old_y = snake->y;		
+			go(snake);
+			goTail(snake,old_x,old_y);
+			 last_step_time = current_time; 
+			}
 		changeDirection(snake, key_pressed);
 	}
 	free(snake->tail);
