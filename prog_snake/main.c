@@ -64,24 +64,26 @@ void initSnake(snake_t *head, size_t size,int x, int y)
 
 void go(struct snake_t *head)
 {
-	char ch = '@';
+	char ch = 'Z';
 	mvprintw(head->y, head->x, " ");
 	int max_x=0, max_y=0;
 	getmaxyx(stdscr,max_y,max_x);
 	switch (head->direction)
 	{
 		case LEFT:
-		if(head->x <=0)
-			head->x = max_x;
+		if(head->x <=1)	head->x = max_x -1;
 		mvprintw(head->y, --(head->x), "%c", ch);
 		break;
 		case RIGHT:
+		if (head->x >= max_x - 2) head->x = 1;
 		mvprintw(head->y, ++(head->x), "%c", ch);
 		break;
 		case UP:
+		if (head->y <= MIN_Y) head->y = max_y - 2;
 		mvprintw(--(head->y), head->x, "%c", ch);
 		break;
 		case DOWN:
+		if (head->y >= max_y - 2) head->y = MIN_Y;
 		mvprintw(++(head->y), head->x, "%c", ch);
 		break;
 		default:
@@ -89,6 +91,35 @@ void go(struct snake_t *head)
 	}
 }
 
+void goTail(struct snake_t *head, int old_x, int old_y)
+{
+	char ch = '*';
+
+    head->tail[0].x = old_x;
+    head->tail[0].y = old_y;
+    
+	mvprintw(head->tail[head->tsize-1].y, head->tail[head->tsize-1].x," ");
+	for(size_t i = head->tsize-1; i>0; i--)
+	{
+		head->tail[i] = head->tail[i-1];
+		if(head->tail[i].y || head->tail[i].x)
+			mvprintw(head->tail[i].y, head->tail[i].x, "%c", ch);
+	}
+	head->tail[0].x = head->x;
+	head->tail[0].y = head->y;	
+}
+
+void changeDirection(snake_t* snake, const int32_t key)
+{
+	if(key == snake->controls.down && snake->direction != UP)
+		snake->direction = DOWN;
+	else if (key == snake->controls.up && snake->direction != DOWN)
+		snake->direction = UP;
+	else if (key == snake->controls.right && snake->direction != LEFT)
+		snake->direction = RIGHT;
+		else if (key == snake->controls.left && snake->direction != RIGHT)
+		snake->direction = LEFT;	
+}
 
 int main(int argc, char **argv)
 {
@@ -107,12 +138,22 @@ int main(int argc, char **argv)
 	curs_set(FALSE);
 	mvprintw(0,0,"Use arrows for control. Press 'F10' for EXIT");
 	timeout(0);
+	
+	start_color();
+	init_pair(1, COLOR_YELLOW , COLOR_BLACK);
+	attron(COLOR_PAIR(1));
+	box(stdscr,'*','*');	
+	
 	int key_pressed=0;
 	while(key_pressed != STOP_GAME)
 	{
 		key_pressed = getch();
+		int old_x = snake->x;
+		int old_y = snake->y;		
 		go(snake);
+		goTail(snake,old_x,old_y);
 		timeout(100);
+		changeDirection(snake, key_pressed);
 	}
 	free(snake->tail);
 	free(snake);
