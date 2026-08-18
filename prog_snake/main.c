@@ -5,7 +5,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <string.h>
-#include <curses.h>
+#include <pdcurses.h>
 
 #define MIN_Y 2
 
@@ -35,6 +35,12 @@ typedef struct snake_t
 	tail_t *tail;
 	struct control_buttons controls;
 } snake_t;
+
+typedef struct {
+    int x;
+    int y;
+} food_t;
+
 
 void initTail(struct tail_t t[], size_t size)
 {
@@ -109,20 +115,72 @@ void goTail(struct snake_t *head, int old_x, int old_y)
 	head->tail[0].y = head->y;	
 }
 
+// void changeDirection(snake_t* snake, const int32_t key)
+// {
+// 	if(key == snake->controls.down && snake->direction != UP)
+// 		snake->direction = DOWN;
+// 	else if (key == snake->controls.up && snake->direction != DOWN)
+// 		snake->direction = UP;
+// 	else if (key == snake->controls.right && snake->direction != LEFT)
+// 		snake->direction = RIGHT;
+// 		else if (key == snake->controls.left && snake->direction != RIGHT)
+// 		snake->direction = LEFT;	
+// }
+
 void changeDirection(snake_t* snake, const int32_t key)
 {
-	if(key == snake->controls.down && snake->direction != UP)
-		snake->direction = DOWN;
-	else if (key == snake->controls.up && snake->direction != DOWN)
-		snake->direction = UP;
-	else if (key == snake->controls.right && snake->direction != LEFT)
-		snake->direction = RIGHT;
-		else if (key == snake->controls.left && snake->direction != RIGHT)
-		snake->direction = LEFT;	
+    // Приводим символ к нижнему регистру (например, 'W' станет 'w', а стрелочки и KEY_F(10) не изменятся)
+    int low_key = tolower(key);
+
+    if ((key == snake->controls.down || low_key == 's') && snake->direction != UP)
+        snake->direction = DOWN;
+    else if ((key == snake->controls.up || low_key == 'w') && snake->direction != DOWN)
+        snake->direction = UP;
+    else if ((key == snake->controls.right || low_key == 'd') && snake->direction != LEFT)
+        snake->direction = RIGHT;
+    else if ((key == snake->controls.left || low_key == 'a') && snake->direction != RIGHT)
+        snake->direction = LEFT;    
 }
+
+#include <stdlib.h> // Для функций rand()
+
+// Предполагаем, что структура еды выглядит примерно так:
+// typedef struct { int x; int y; } food_t;
+
+void spawnFood(food_t* food, const snake_t* snake, int width, int height)
+{
+    int is_on_snake;
+
+    do {
+        is_on_snake = 0; // Сбрасываем флаг при каждой попытке
+
+        // 1. Генерируем случайные координаты в пределах игрового поля
+        // Отступаем по 1 символу от краев (0 и width-1), чтобы еда не спавнилась в стенах
+        food->x = 1 + rand() % (width - 2);
+        food->y = MIN_Y + rand() % (height - MIN_Y - 1); // Учитываем вашу константу MIN_Y для верхней границы
+
+        // 2. Проверяем, не совпали ли координаты с головой змейки
+        if (food->x == snake->x && food->y == snake->y) {
+            is_on_snake = 1;
+            continue;
+        }
+
+        // 3. Проверяем, не совпали ли координаты с телом (хвостом) змейки
+        for (size_t i = 0; i < snake->tsize; i++) {
+            if (food->x == snake->tail[i].x && food->y == snake->tail[i].y) {
+                is_on_snake = 1;
+                break; // Переходим к следующей итерации do-while
+            }
+        }
+
+    } while (is_on_snake); // Повторяем цикл, пока еда генерируется на змейке
+}
+
 
 int main(int argc, char **argv)
 {
+	srand(time(NULL));
+
 	control_buttons.up = KEY_UP;
 	control_buttons.down = KEY_DOWN;
 	control_buttons.left = KEY_LEFT;
@@ -131,16 +189,28 @@ int main(int argc, char **argv)
 	snake_t *snake = (snake_t*)malloc(sizeof(snake_t));
 	initSnake(snake, START_TAIL_SIZE, 10, 10);
 	
+	food_t food;
+
 	initscr();
 	keypad(stdscr,TRUE);
 	raw();
 	noecho();
 	curs_set(FALSE);
-	mvprintw(0,0,"Use arrows for control. Press 'F10' for EXIT");
+
+	    // Получаем размеры экрана, чтобы передать их в функцию спавна
+    int max_x, max_y;
+    getmaxyx(stdscr, max_y, max_x);
+
+	    // 2. Создаем первую еду на поле до начала игрового цикла
+    spawnFood(&food, snake, max_x, max_y);
+
+	mvprintw(1,1,"Use arrows for control. Press 'F10' for EXIT");
 	timeout(0);
 	
 	start_color();
 	init_pair(1, COLOR_YELLOW , COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_BLACK); // Цветовая пара для еды
+
 	attron(COLOR_PAIR(1));
 	box(stdscr,'*','*');	
 	
@@ -152,6 +222,12 @@ int main(int argc, char **argv)
 	while(key_pressed != STOP_GAME)
 	{
 		key_pressed = getch();
+
+        // 3. Отрисовываем еду на каждой итерации цикла
+        attron(COLOR_PAIR(2));
+        mvaddch(food.y, food.x, '@'); // Отображаем еду символом '@'
+        attron(COLOR_PAIR(1)); // Возвращаем цвет змейки/стен
+
 		
 		clock_t current_time = clock();
         if (current_time - last_step_time >= delay) 
@@ -160,7 +236,19 @@ int main(int argc, char **argv)
 			int old_y = snake->y;		
 			go(snake);
 			goTail(snake,old_x,old_y);
-			 last_step_time = current_time; 
+
+			            // 4. Логика поедания: проверяем, наступила ли голова змейки на еду
+            if (snake->x == food.x && snake->y == food.y) 
+            {
+                // Увеличиваем размер змейки
+                snake->tsize++;
+                snake->tail = realloc(snake->tail, snake->tsize * sizeof(tail_t));
+                
+                // Спавним новую еду в другом случайном месте
+                spawnFood(&food, snake, max_x, max_y);
+            }
+			
+			last_step_time = current_time; 
 			}
 		changeDirection(snake, key_pressed);
 	}
