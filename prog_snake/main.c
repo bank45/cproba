@@ -127,18 +127,45 @@ void goTail(struct snake_t *head, int old_x, int old_y)
 // 		snake->direction = LEFT;	
 // }
 
+int32_t checkDirection(snake_t* snake, int32_t key) {
+    if (snake->direction == UP && key == DOWN) {
+        return snake->direction;
+    }
+    if (snake->direction == DOWN && key == UP) {
+        return snake->direction;
+    }
+    if (snake->direction == LEFT && key == RIGHT) {
+        return snake->direction;
+    }
+    if (snake->direction == RIGHT && key == LEFT) {
+        return snake->direction;
+    }
+
+    return key;
+}
+
+
 void changeDirection(snake_t* snake, const int32_t key)
 {
     int low_key = tolower(key);
+    int requested_direction = -1; 
 
-    if ((key == snake->controls.down || low_key == 's') && snake->direction != UP)
-        snake->direction = DOWN;
-    else if ((key == snake->controls.up || low_key == 'w') && snake->direction != DOWN)
-        snake->direction = UP;
-    else if ((key == snake->controls.right || low_key == 'd') && snake->direction != LEFT)
-        snake->direction = RIGHT;
-    else if ((key == snake->controls.left || low_key == 'a') && snake->direction != RIGHT)
-        snake->direction = LEFT;    
+    if (key == snake->controls.down || low_key == 's') {
+        requested_direction = DOWN;
+    }
+    else if (key == snake->controls.up || low_key == 'w') {
+        requested_direction = UP;
+    }
+    else if (key == snake->controls.right || low_key == 'd') {
+        requested_direction = RIGHT;
+    }
+    else if (key == snake->controls.left || low_key == 'a') {
+        requested_direction = LEFT;
+    }    
+
+    if (requested_direction != -1) {
+        snake->direction = checkDirection(snake, requested_direction);
+    }
 }
 
 
