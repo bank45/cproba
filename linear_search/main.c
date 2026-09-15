@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-// 1. ГЛОВАЛЬНЫЕ ПЕРЕМЕННЫЕ 
+// 1. ГЛОВАЛЬНЫЕ ПЕРЕМЕННЫЕ - подсчет итераций
 int iterations_f12 = 0;
 int iterations_f23 = 0;
 int iterations_f13 = 0;
@@ -112,7 +112,7 @@ void print_help() {
     printf("  -test       Запустить режим тестирования функций root и integral\n");
 }
 
-// 5. ГЛАВНАЯ ПРОГРАММА
+// 5. ПРОГРАММА
 int main(int argc, char *argv[]) {
     float eps1 = 1e-5f;
     float eps2 = 1e-4f;
