@@ -5,7 +5,7 @@ LIBS = -lm
 
 # Цели сборки
 TARGET = area_calculator
-SRCS = main_root.c
+SRCS = main.c
 OBJS = $(SRCS:.c=.o)
 
 .PHONY: all clean
